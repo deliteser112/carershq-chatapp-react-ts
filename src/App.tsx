@@ -8,6 +8,7 @@ import { AppointmentList } from './components/appointments/AppointmentList';
 import { UserList } from './components/chat/UserList';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { fetchHistoricalMessages, sendMessageAsync } from './features/chat/chatSlice';
+import { ReactComponent as ChatIcon } from './assets/chat-icon.svg';
 
 function App() {
   const [activeTab, setActiveTab] = useState<string>('chat');
@@ -15,18 +16,18 @@ function App() {
   const dispatch = useAppDispatch();
   const messages = useAppSelector((state) => state.chat.messages);
   const users = useAppSelector((state) => state.chat.users);
-  
+
   const selectedUser = users.find(user => user.userId === selectedUserId);
 
   const handleSelectUser = (userId: number) => {
     setSelectedUserId(userId);
-    dispatch(fetchHistoricalMessages(userId));
+    dispatch(fetchHistoricalMessages(userId - 1));
   };
 
   const handleSendMessage = (text: string) => {
     if (selectedUserId) {
       dispatch(sendMessageAsync({
-        chatId: selectedUserId,
+        chatId: selectedUserId - 1,
         sinkId: 1,
         destinationId: selectedUserId,
         body: text,
@@ -65,13 +66,15 @@ function App() {
                     <span className="text-green-500">Online</span>
                   </div>
                   <div className="flex-grow flex flex-col">
-                    <ChatList messages={messages} />
+                    <ChatList />
                     <SendMessageForm onSendMessage={handleSendMessage} />
                   </div>
                 </>
               ) : (
-                <div className="flex-grow flex items-center justify-center text-gray-600 text-lg">
-                  Please select a user to start chatting.
+                <div className="flex-grow flex flex-col items-center justify-center text-gray-600 text-lg mt-[100px]">
+                  <ChatIcon className="w-24 h-24 mb-4 text-gray-300" />
+                  <p className="text-xl font-semibold text-gray-500 mb-2">No User Selected</p>
+                  <p className="text-base text-gray-400">Select a user from the list to start chatting!</p>
                 </div>
               )}
             </div>

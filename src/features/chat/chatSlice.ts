@@ -42,7 +42,7 @@ export const fetchUsers = createAsyncThunk(
 export const fetchHistoricalMessages = createAsyncThunk(
   'chat/fetchHistoricalMessages',
   async (chatId: number) => {
-    const response = await getHistoricalMessages(chatId, 50, 1); // Example pagination
+    const response = await getHistoricalMessages(chatId, 50, 1);
     return response.data;
   }
 );

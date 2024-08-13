@@ -36,16 +36,18 @@ const UserList: React.FC<UserListProps> = ({ selectedUserId, onSelectUser, messa
     return lastMessage ? new Date(lastMessage.createdDateTime * 1000).toLocaleTimeString() : '';
   };
 
+  const filteredUsers = users.filter(user => user.userId !== 1); // Exclude Mr. Interviewee
+
   return (
     <div className="space-y-2">
-      {users.map((user) => (
+      {filteredUsers.map((user) => (
         <UserListItem
           key={user.userId}
           user={user}
           selectedUserId={selectedUserId}
           onSelectUser={onSelectUser}
-          lastMessage={getLastMessage(user.userId)}
-          lastMessageTime={getLastMessageTime(user.userId)}
+          lastMessage={getLastMessage(user.userId - 1)}
+          lastMessageTime={getLastMessageTime(user.userId - 1)}
         />
       ))}
     </div>
