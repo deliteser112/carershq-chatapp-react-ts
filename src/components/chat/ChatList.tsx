@@ -1,15 +1,51 @@
-import React, { useEffect, useRef } from 'react';
-import { useAppSelector } from '../../hooks';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { useAppSelector, useAppDispatch } from '../../hooks';
+import { fetchHistoricalMessages } from '../../features/chat/chatSlice';
 
-const ChatList: React.FC = () => {
+interface ChatMessage {
+  messageId: number;
+  chatId: number;
+  sinkId: number;
+  destinationId: number;
+  body: string;
+  createdDateTime: number;
+}
+
+interface ChatListProps {
+  selectedUserId: number | null;
+}
+
+const ChatList: React.FC<ChatListProps> = ({ selectedUserId }) => {
   const chatListRef = useRef<HTMLDivElement>(null);
+  const dispatch = useAppDispatch();
   const messages = useAppSelector(state => state.chat.messages);
+  const pageNumber = useAppSelector(state => state.chat.pageNumber);
+  const hasMoreMessages = useAppSelector(state => state.chat.hasMoreMessages);
 
+  // Scroll to bottom when new messages are added
   useEffect(() => {
     if (chatListRef.current) {
       chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const handleScroll = useCallback(() => {
+    if (chatListRef.current) {
+      const { scrollTop } = chatListRef.current;
+      if (scrollTop === 0 && hasMoreMessages && selectedUserId !== null) {
+        // Load more messages when scrolled to the top
+        dispatch(fetchHistoricalMessages({ userId: selectedUserId, pageNumber: pageNumber + 1 }));
+      }
+    }
+  }, [dispatch, pageNumber, hasMoreMessages, selectedUserId]);
+
+  useEffect(() => {
+    const chatListNode = chatListRef.current;
+    if (chatListNode) {
+      chatListNode.addEventListener('scroll', handleScroll);
+      return () => chatListNode.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
 
   return (
     <div ref={chatListRef} className="flex-grow p-4 space-y-4 bg-gray-50 overflow-y-auto rounded-lg h-[300px] flex flex-col-reverse">

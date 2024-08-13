@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { Tabs } from './components/layout/Tabs';
@@ -7,7 +7,7 @@ import { SendMessageForm } from './components/chat/SendMessageForm';
 import { AppointmentList } from './components/appointments/AppointmentList';
 import { UserList } from './components/chat/UserList';
 import { useAppDispatch, useAppSelector } from './hooks';
-import { fetchHistoricalMessages, sendMessageAsync } from './features/chat/chatSlice';
+import { fetchHistoricalMessages, resetPagination, sendMessageAsync } from './features/chat/chatSlice';
 import { ReactComponent as ChatIcon } from './assets/chat-icon.svg';
 
 function App() {
@@ -21,13 +21,14 @@ function App() {
 
   const handleSelectUser = (userId: number) => {
     setSelectedUserId(userId);
-    dispatch(fetchHistoricalMessages(userId - 1));
+    dispatch(resetPagination()); // Reset pagination state
+    dispatch(fetchHistoricalMessages({ userId, pageNumber: 1 })); // Load the first page
   };
 
   const handleSendMessage = (text: string) => {
     if (selectedUserId) {
       dispatch(sendMessageAsync({
-        chatId: selectedUserId - 1,
+        userId: selectedUserId,
         sinkId: 1,
         destinationId: selectedUserId,
         body: text,
@@ -66,7 +67,7 @@ function App() {
                     <span className="text-green-500">Online</span>
                   </div>
                   <div className="flex-grow flex flex-col">
-                    <ChatList />
+                    <ChatList selectedUserId={selectedUserId} />
                     <SendMessageForm onSendMessage={handleSendMessage} />
                   </div>
                 </>

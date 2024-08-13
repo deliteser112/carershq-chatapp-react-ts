@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getChats, sendMessage, getHistoricalMessages, getUsers, receiveMessages } from '../../services/api';
+import { getHistoricalMessages, getUsers, sendMessage } from '../../services/api';
 
 interface ChatMessage {
   messageId: number;
@@ -20,6 +20,8 @@ interface ChatState {
   messages: ChatMessage[];
   status: 'idle' | 'loading' | 'failed';
   error: string | null;
+  pageNumber: number;
+  hasMoreMessages: boolean;
 }
 
 const initialState: ChatState = {
@@ -27,6 +29,8 @@ const initialState: ChatState = {
   messages: [],
   status: 'idle',
   error: null,
+  pageNumber: 1,
+  hasMoreMessages: true,
 };
 
 // Async thunk to fetch the list of users
@@ -38,24 +42,32 @@ export const fetchUsers = createAsyncThunk(
   }
 );
 
-// Async thunk to fetch historical messages for a selected user
+// Async thunk to fetch historical messages with pagination support
 export const fetchHistoricalMessages = createAsyncThunk(
   'chat/fetchHistoricalMessages',
-  async (chatId: number) => {
-    const response = await getHistoricalMessages(chatId, 50, 1);
-    return response.data;
+  async ({ userId, pageNumber }: { userId: number, pageNumber: number }, { getState }) => {
+    const state = getState() as { chat: ChatState };
+    const chatId = userId - 1;
+    const pageSize = 50;
+    const response = await getHistoricalMessages(chatId, pageSize, pageNumber);
+    return {
+      messages: response.data,
+      pageNumber,
+      pageSize,
+    };
   }
 );
 
 // Async thunk to send a message
 export const sendMessageAsync = createAsyncThunk(
   'chat/sendMessage',
-  async (data: { chatId: number; sinkId: number; destinationId: number; body: string }, { dispatch }) => {
-    const response = await sendMessage(data);
+  async (data: { userId: number; sinkId: number; destinationId: number; body: string }, { dispatch }) => {
+    const chatId = data.userId - 1;
+    const response = await sendMessage({ ...data, chatId });
     const messageId = response.data;
-    
+
     // After sending the message, fetch the latest messages to include the new message
-    await dispatch(fetchHistoricalMessages(data.chatId));
+    await dispatch(fetchHistoricalMessages({ userId: data.userId, pageNumber: 1 }));
 
     return messageId;
   }
@@ -64,7 +76,13 @@ export const sendMessageAsync = createAsyncThunk(
 const chatSlice = createSlice({
   name: 'chat',
   initialState,
-  reducers: {},
+  reducers: {
+    resetPagination(state) {
+      state.pageNumber = 1;
+      state.hasMoreMessages = true;
+      state.messages = [];
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchUsers.pending, (state) => {
@@ -83,7 +101,16 @@ const chatSlice = createSlice({
       })
       .addCase(fetchHistoricalMessages.fulfilled, (state, action) => {
         state.status = 'idle';
-        state.messages = action.payload;
+        const newMessages = action.payload.messages;
+
+        // Check if more messages can be loaded
+        if (newMessages.length < action.payload.pageSize) {
+          state.hasMoreMessages = false;
+        }
+
+        // Prepend new messages to the existing list
+        state.messages = [...newMessages, ...state.messages];
+        state.pageNumber = action.payload.pageNumber;
       })
       .addCase(fetchHistoricalMessages.rejected, (state, action) => {
         state.status = 'failed';
@@ -95,4 +122,5 @@ const chatSlice = createSlice({
   },
 });
 
+export const { resetPagination } = chatSlice.actions;
 export default chatSlice.reducer;
