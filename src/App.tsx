@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { Tabs } from './components/layout/Tabs';
@@ -6,13 +6,17 @@ import { ChatList } from './components/chat/ChatList';
 import { SendMessageForm } from './components/chat/SendMessageForm';
 import { AppointmentList } from './components/appointments/AppointmentList';
 import { UserList } from './components/chat/UserList';
+import { ScheduleAppointmentModal } from './components/appointments/AppointmentModal';
 import { useAppDispatch, useAppSelector } from './hooks';
 import { fetchHistoricalMessages, resetPagination, sendMessageAsync } from './features/chat/chatSlice';
+import { createAppointmentAsync } from './features/appointments/appointmentSlice';
+
 import { ReactComponent as ChatIcon } from './assets/chat-icon.svg';
 
 function App() {
   const [activeTab, setActiveTab] = useState<string>('chat');
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const dispatch = useAppDispatch();
   const messages = useAppSelector((state) => state.chat.messages);
   const users = useAppSelector((state) => state.chat.users);
@@ -21,8 +25,8 @@ function App() {
 
   const handleSelectUser = (userId: number) => {
     setSelectedUserId(userId);
-    dispatch(resetPagination()); // Reset pagination state
-    dispatch(fetchHistoricalMessages({ userId, pageNumber: 1 })); // Load the first page
+    dispatch(resetPagination());
+    dispatch(fetchHistoricalMessages({ userId, pageNumber: 1 }));
   };
 
   const handleSendMessage = (text: string) => {
@@ -36,6 +40,14 @@ function App() {
     }
   };
 
+  const handleScheduleAppointment = (appointmentData: { dateTime: string, selectedUserId: number }) => {
+    dispatch(createAppointmentAsync({
+      initiatorUserId: 1,
+      acceptorUserId: appointmentData.selectedUserId,
+      appointmentDateTime: appointmentData.dateTime,
+    }));
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <Header />
@@ -44,6 +56,12 @@ function App() {
         {activeTab === 'chat' && (
           <div className="flex h-full w-full">
             <div className={`w-full flex-shrink-0 md:w-96 border-r p-4 bg-gray-50 ${selectedUserId ? 'hidden md:block' : 'block'}`}>
+              <button
+                className="w-full mb-4 p-2 bg-purple-500 text-white rounded-lg"
+                onClick={() => setIsModalOpen(true)}
+              >
+                Schedule Appointment
+              </button>
               <div className="mb-4">
                 <input
                   type="text"
@@ -84,6 +102,14 @@ function App() {
         {activeTab === 'appointments' && <AppointmentList />}
       </div>
       <Footer />
+      {isModalOpen && (
+        <ScheduleAppointmentModal 
+          users={users.filter(user => user.userId !== 1)} // Exclude Mr. Interviewee
+          selectedUserId={selectedUserId} 
+          onClose={() => setIsModalOpen(false)} 
+          onSchedule={handleScheduleAppointment} 
+        />
+      )}
     </div>
   );
 }
