@@ -14,7 +14,7 @@ const ScheduleAppointment: React.FC<ScheduleAppointmentProps> = ({ selectedUserI
   const handleSchedule = () => {
     if (selectedUserId) {
       dispatch(createAppointmentAsync({
-        initiatorUserId: 1, // Assuming Mr. Interviewee's userId is 1
+        initiatorUserId: 1,
         acceptorUserId: selectedUserId,
         appointmentDateTime: new Date(datetime).toISOString(), // Convert to ISO string for consistency
       }));

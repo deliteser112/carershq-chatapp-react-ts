@@ -42,7 +42,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedUserId }) => {
     <div ref={chatListRef} className="flex-grow p-4 space-y-4 bg-gray-50 overflow-y-auto rounded-lg h-[300px] flex flex-col-reverse">
       {messages.map((message) => (
         <div
-          key={message.messageId}
+          key={`${message.messageId}-${message.createdDateTime}`}
           className={`flex mt-4 ${message.sinkId === 1 ? 'justify-end' : 'justify-start'}`}
         >
           <div className={`flex items-center space-x-4 ${message.sinkId === 1 ? 'flex-row-reverse' : 'flex-row'}`}>

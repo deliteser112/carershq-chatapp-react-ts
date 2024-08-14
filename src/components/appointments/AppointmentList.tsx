@@ -9,7 +9,7 @@ import {
 import { fetchUsers } from "../../features/chat/chatSlice";
 
 import { AppointmentItem } from "./AppointmentItem";
-import Modal from "../common/Modal";  // Import the Modal component
+import Modal from "../common/Modal";
 import '../../styles/appointments.css';
 
 const AppointmentList: React.FC = () => {
@@ -52,6 +52,7 @@ const AppointmentList: React.FC = () => {
       dispatch(deleteAppointmentAsync({ appointmentId, deleteMessage: message }));
       setIsModalOpen(false);
       setIsPrompt(false);
+      setPromptInput("");
     });
     setIsModalOpen(true);
   };
@@ -59,7 +60,7 @@ const AppointmentList: React.FC = () => {
   const handleDialogClose = () => {
     setIsPrompt(false);
     setIsModalOpen(false);
-  }
+  };
 
   const getUserName = (userId: number) => {
     const user = users.find((u) => u.userId === userId);
@@ -67,7 +68,10 @@ const AppointmentList: React.FC = () => {
   };
 
   const groupAppointmentsByMonth = (appointments: any[]) => {
-    return appointments.reduce((acc: any, appointment: any) => {
+    // Sort appointments by date
+    const sortedAppointments = appointments.sort((a, b) => b.appointmentDateTime - a.appointmentDateTime);
+    
+    return sortedAppointments.reduce((acc: any, appointment: any) => {
       const month = dayjs.unix(appointment.appointmentDateTime).format("MMMM");
       if (!acc[month]) {
         acc[month] = [];

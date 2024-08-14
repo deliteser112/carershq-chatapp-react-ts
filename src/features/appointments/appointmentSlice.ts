@@ -37,7 +37,6 @@ export const fetchAppointments = createAsyncThunk(
 export const createAppointmentAsync = createAsyncThunk(
   'appointments/createAppointment',
   async (appointmentData: { initiatorUserId: number; acceptorUserId: number; appointmentDateTime: string }) => {
-    console.log('appointmentData', appointmentData);
     const response = await createAppointment(appointmentData);
     return response.data;
   }

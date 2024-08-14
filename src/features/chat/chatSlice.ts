@@ -46,7 +46,6 @@ export const fetchUsers = createAsyncThunk(
 export const fetchHistoricalMessages = createAsyncThunk(
   'chat/fetchHistoricalMessages',
   async ({ userId, pageNumber }: { userId: number, pageNumber: number }, { getState }) => {
-    const state = getState() as { chat: ChatState };
     const chatId = userId - 1;
     const pageSize = 50;
     const response = await getHistoricalMessages(chatId, pageSize, pageNumber);
@@ -101,15 +100,23 @@ const chatSlice = createSlice({
       })
       .addCase(fetchHistoricalMessages.fulfilled, (state, action) => {
         state.status = 'idle';
-        const newMessages = action.payload.messages;
-
+        const newMessages: ChatMessage[] = action.payload.messages;
+      
         // Check if more messages can be loaded
         if (newMessages.length < action.payload.pageSize) {
           state.hasMoreMessages = false;
         }
-
-        // Prepend new messages to the existing list
-        state.messages = [...newMessages, ...state.messages];
+      
+        // Filter out duplicate messages
+        const uniqueMessages = newMessages.filter(
+          (newMessage: ChatMessage) => 
+            !state.messages.some(
+              (existingMessage: ChatMessage) => existingMessage.messageId === newMessage.messageId
+            )
+        );
+      
+        // Prepend unique new messages to the existing list
+        state.messages = [...uniqueMessages, ...state.messages];
         state.pageNumber = action.payload.pageNumber;
       })
       .addCase(fetchHistoricalMessages.rejected, (state, action) => {
