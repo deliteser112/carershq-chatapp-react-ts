@@ -74,7 +74,7 @@ function App() {
             <div className={`flex-grow flex flex-col h-full p-0 sm:p-4 bg-white ${selectedUserId ? 'block' : 'hidden md:block'}`}>
               {selectedUserId ? (
                 <>
-                  <div className="flex items-center justify-between border-b px-4 pb-4 mb-4 ">
+                  <div className="flex items-center justify-between border-b px-4 pb-4 mb-4 pt-4 md:pt-0">
                     <button
                       className="md:hidden text-purple-500"
                       onClick={() => setSelectedUserId(null)}

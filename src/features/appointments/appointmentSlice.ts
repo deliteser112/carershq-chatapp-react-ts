@@ -2,6 +2,10 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { createAppointment, getAllAppointments, acceptAppointment, deleteAppointment } from '../../services/api';
 
 interface Appointment {
+  appointmentId: number;
+  acceptorUserId: number;
+  appointmentDateTime: number;
+  state: number;
   id: number;
   userId: number;
   datetime: number;
@@ -43,6 +47,7 @@ export const createAppointmentAsync = createAsyncThunk(
 export const acceptAppointmentAsync = createAsyncThunk(
   'appointments/acceptAppointment',
   async (appointmentId: number) => {
+    console.log(appointmentId);
     const response = await acceptAppointment(appointmentId);
     return response.data;
   }
