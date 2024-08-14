@@ -2,15 +2,6 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../../hooks';
 import { fetchHistoricalMessages } from '../../features/chat/chatSlice';
 
-interface ChatMessage {
-  messageId: number;
-  chatId: number;
-  sinkId: number;
-  destinationId: number;
-  body: string;
-  createdDateTime: number;
-}
-
 interface ChatListProps {
   selectedUserId: number | null;
 }

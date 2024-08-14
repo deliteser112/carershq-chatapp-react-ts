@@ -47,7 +47,6 @@ export const createAppointmentAsync = createAsyncThunk(
 export const acceptAppointmentAsync = createAsyncThunk(
   'appointments/acceptAppointment',
   async (appointmentId: number) => {
-    console.log(appointmentId);
     const response = await acceptAppointment(appointmentId);
     return response.data;
   }
@@ -83,11 +82,14 @@ const appointmentSlice = createSlice({
         state.appointments.push(action.payload);
       })
       .addCase(acceptAppointmentAsync.fulfilled, (state, action) => {
-        const index = state.appointments.findIndex(a => a.id === action.meta.arg);
-        if (index !== -1) state.appointments[index].status = 'accepted';
+        const index = state.appointments.findIndex(a => a.appointmentId === action.meta.arg);
+        if (index !== -1) {
+          state.appointments[index].state = 2; // Update the state to 'accepted'
+          state.appointments[index].status = 'accepted'; // Update status if necessary
+        }
       })
       .addCase(deleteAppointmentAsync.fulfilled, (state, action) => {
-        state.appointments = state.appointments.filter(a => a.id !== action.meta.arg.appointmentId);
+        state.appointments = state.appointments.filter(a => a.appointmentId !== action.meta.arg.appointmentId);
       });
   },
 });

@@ -8,6 +8,8 @@ import {
 } from "../../features/appointments/appointmentSlice";
 import { fetchUsers } from "../../features/chat/chatSlice";
 
+import { AppointmentItem } from "./AppointmentItem";
+import Modal from "../common/Modal";  // Import the Modal component
 import '../../styles/appointments.css';
 
 const AppointmentList: React.FC = () => {
@@ -19,6 +21,13 @@ const AppointmentList: React.FC = () => {
   const status = useAppSelector((state) => state.appointments.status);
   const error = useAppSelector((state) => state.appointments.error);
   const [activeTab, setActiveTab] = useState("all"); // Manage tabs state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState("");
+  const [modalTitle, setModalTitle] = useState("");
+  const [onConfirmCallback, setOnConfirmCallback] = useState<(message: string | undefined) => void>(() => {});
+
+  const [isPrompt, setIsPrompt] = useState(false);
+  const [promptInput, setPromptInput] = useState("");
 
   useEffect(() => {
     dispatch(fetchAppointments(1)); // Assuming Mr. Interviewee's ID is 1
@@ -26,60 +35,35 @@ const AppointmentList: React.FC = () => {
   }, [dispatch]);
 
   const handleAccept = (appointmentId: number) => {
-    const confirmAccept = window.confirm(
-      "Are you sure you want to accept this appointment?"
-    );
-    if (confirmAccept) {
+    setModalTitle("Confirm Acceptance");
+    setModalContent("Are you sure you want to accept this appointment?");
+    setOnConfirmCallback(() => () => {
       dispatch(acceptAppointmentAsync(appointmentId));
-    }
+      setIsModalOpen(false);
+    });
+    setIsModalOpen(true);
   };
 
   const handleDelete = (appointmentId: number) => {
-    const deleteMessage = prompt("Please enter a reason for deletion:", "");
-    if (deleteMessage !== null) {
-      const confirmDelete = window.confirm(
-        "Are you sure you want to delete this appointment?"
-      );
-      if (confirmDelete) {
-        dispatch(deleteAppointmentAsync({ appointmentId, deleteMessage }));
-      }
-    }
+    setIsPrompt(true);
+    setModalTitle("Confirm Deletion");
+    setModalContent("Are you sure you want to delete this appointment?");
+    setOnConfirmCallback(() => (message: string) => {
+      dispatch(deleteAppointmentAsync({ appointmentId, deleteMessage: message }));
+      setIsModalOpen(false);
+      setIsPrompt(false);
+    });
+    setIsModalOpen(true);
   };
+
+  const handleDialogClose = () => {
+    setIsPrompt(false);
+    setIsModalOpen(false);
+  }
 
   const getUserName = (userId: number) => {
     const user = users.find((u) => u.userId === userId);
     return user ? user.name : `User ID: ${userId}`;
-  };
-
-  const formatDate = (timestamp: number) => {
-    return dayjs.unix(timestamp).format("DD/MM/YYYY HH:mm");
-  };
-
-  const getStatus = (state: number) => {
-    switch (state) {
-      case 1:
-        return (
-          <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-            Pending
-          </span>
-        );
-      case 2:
-        return (
-          <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-            Confirmed
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-            Deleted
-          </span>
-        );
-    }
-  };
-
-  const getEndTime = (timestamp: number) => {
-    return dayjs.unix(timestamp).add(60, "minute").format("HH:mm");
   };
 
   const groupAppointmentsByMonth = (appointments: any[]) => {
@@ -139,43 +123,30 @@ const AppointmentList: React.FC = () => {
                 {month}
               </div>
               {groupedAppointments[month].map((appointment: any) => (
-                <div
+                <AppointmentItem
                   key={appointment.appointmentId}
-                  className="bg-white p-4 rounded-lg shadow-md mb-4"
-                >
-                  <div className="block md:flex justify-between items-center">
-                    <div className="text-lg font-semibold">
-                      {formatDate(appointment.appointmentDateTime)} -{" "}
-                      {getEndTime(appointment.appointmentDateTime)}
-                    </div>
-                    <div className="text-xl">
-                      Interview with <span className="font-bold">{getUserName(appointment.acceptorUserId)}</span>
-                    </div>
-                  </div>
-                  <div className="text-gray-500 mt-1">
-                    Status: {getStatus(appointment.state)}
-                  </div>
-                  {appointment.state === 1 && (
-                    <div className="mt-4 flex space-x-4">
-                      <button
-                        onClick={() => handleAccept(appointment.appointmentId)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => handleDelete(appointment.appointmentId)}
-                        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  appointment={appointment}
+                  getUserName={getUserName}
+                  handleAccept={handleAccept}
+                  handleDelete={handleDelete}
+                />
               ))}
             </div>
           ))}
         </div>
+      )}
+
+      {/* Modal */}
+      {isModalOpen && (
+        <Modal
+          title={modalTitle}
+          content={modalContent}
+          onConfirm={(message: string) => onConfirmCallback(message)}
+          onCancel={handleDialogClose}
+          showInput={isPrompt}
+          inputValue={promptInput}
+          setInputValue={setPromptInput}
+        />
       )}
     </div>
   );
