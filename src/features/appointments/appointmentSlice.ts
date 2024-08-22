@@ -10,6 +10,7 @@ interface Appointment {
   userId: number;
   datetime: number;
   status: 'initiated' | 'accepted';
+  deleteMessage?: string;
 }
 
 interface AppointmentState {
@@ -88,7 +89,11 @@ const appointmentSlice = createSlice({
         }
       })
       .addCase(deleteAppointmentAsync.fulfilled, (state, action) => {
-        state.appointments = state.appointments.filter(a => a.appointmentId !== action.meta.arg.appointmentId);
+        const index = state.appointments.findIndex(a => a.appointmentId === action.payload.appointmentId);
+        if (index !== -1) {
+          state.appointments[index].state = 3;
+          state.appointments[index].deleteMessage = action.payload.deleteMessage;
+        }
       });
   },
 });
